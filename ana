@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>氨基酸综合练习</title>
+    <style>
+        /* 原有样式保持不变 */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .question-box {
+            border: 2px solid #4CAF50;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .option-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: all 0.3s;
+            min-width: 60px;
+        }
+        button:hover {
+            background-color: #e0e0e0;
+        }
+        .correct {
+            background-color: #90EE90 !important;
+        }
+        .wrong {
+            background-color: #FFB6C1 !important;
+        }
+        #score {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-top: 20px;
+        }
+        .question-type {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .chinese-name {
+            font-size: 12px;
+            color: #666;
+            height: 18px;
+        }
+        .show-name {
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="question-box">
+        <div class="question-type" id="questionType"></div>
+        <h2 id="question"></h2>
+        <div class="options" id="options"></div>
+        <div id="feedback"></div>
+        <div id="score">得分: 0</div>
+    </div>
+
+    <script>
+        const aminoAcids = [
+            { name: "甘氨酸", threeLetter: "Gly", oneLetter: "G", categories: ["极性"] },
+            { name: "丙氨酸", threeLetter: "Ala", oneLetter: "A", categories: ["非极性"] },
+            { name: "缬氨酸", threeLetter: "Val", oneLetter: "V", categories: ["非极性"] },
+            { name: "亮氨酸", threeLetter: "Leu", oneLetter: "L", categories: ["非极性"] },
+            { name: "异亮氨酸", threeLetter: "Ile", oneLetter: "I", categories: ["非极性"] },
+            { name: "脯氨酸", threeLetter: "Pro", oneLetter: "P", categories: ["非极性"] },
+            { name: "丝氨酸", threeLetter: "Ser", oneLetter: "S", categories: ["极性", "羟基"] },
+            { name: "苏氨酸", threeLetter: "Thr", oneLetter: "T", categories: ["极性", "羟基"] },
+            { name: "天冬氨酸", threeLetter: "Asp", oneLetter: "D", categories: ["酸性"] },
+            { name: "谷氨酸", threeLetter: "Glu", oneLetter: "E", categories: ["酸性"] },
+            { name: "天冬酰胺", threeLetter: "Asn", oneLetter: "N", categories: ["酰胺"] },
+            { name: "谷氨酰胺", threeLetter: "Gln", oneLetter: "Q", categories: ["酰胺"] },
+            { name: "苯丙氨酸", threeLetter: "Phe", oneLetter: "F", categories: ["芳香族"] },
+            { name: "酪氨酸", threeLetter: "Tyr", oneLetter: "Y", categories: ["芳香族", "羟基"] },
+            { name: "色氨酸", threeLetter: "Trp", oneLetter: "W", categories: ["芳香族"] },
+            { name: "组氨酸", threeLetter: "His", oneLetter: "H", categories: ["碱性"] },
+            { name: "赖氨酸", threeLetter: "Lys", oneLetter: "K", categories: ["碱性"] },
+            { name: "精氨酸", threeLetter: "Arg", oneLetter: "R", categories: ["碱性"] },
+            { name: "甲硫氨酸", threeLetter: "Met", oneLetter: "M", categories: ["含硫"] },
+            { name: "半胱氨酸", threeLetter: "Cys", oneLetter: "C", categories: ["含硫"] }
+        ];
+
+        const structureQuestions = [
+            {
+                type: "芳香族",
+                template: (category) => `以下不属于${category}氨基酸的是：`,
+                getAnswer: (category) => aminoAcids.find(a => !a.categories.includes(category)),
+                getOptions: (category) => aminoAcids.filter(a => a.categories.includes(category))
+            },
+            {
+                type: "含硫",
+                template: (category) => `属于${category}氨基酸的是：`,
+                getAnswer: (category) => aminoAcids.find(a => a.categories.includes(category)),
+                getOptions: (category) => aminoAcids.filter(a => !a.categories.includes(category))
+            }
+        ];
+
+        let score = 0;
+        let currentCorrectAnswer = "";
+        let currentQuestionType = "";
+
+        function generateQuestion() {
+            const questionTypes = [
+                () => generateAbbreviationQuestion(),
+                () => generateStructureQuestion(),
+                () => generateChineseQuestion() // 新增中文题目类型
+            ];
+            const selectedType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+            selectedType();
+        }
+
+        // 新增中文题目生成函数
+        function generateChineseQuestion() {
+            const randomAcid = aminoAcids[Math.floor(Math.random() * aminoAcids.length)];
+            const isThreeLetter = Math.random() > 0.5;
+            
+            document.getElementById("questionType").textContent = "[中文名称练习]";
+            document.getElementById("question").textContent = 
+                `缩写"${isThreeLetter ? randomAcid.threeLetter : randomAcid.oneLetter}"对应的氨基酸是？`;
+            
+            currentCorrectAnswer = randomAcid.name;
+            currentQuestionType = "chinese";
+            generateChineseOptions(randomAcid);
+        }
+
+        function generateAbbreviationQuestion() {
+            const randomAcid = aminoAcids[Math.floor(Math.random() * aminoAcids.length)];
+            const isThreeLetter = Math.random() > 0.5;
+            
+            document.getElementById("questionType").textContent = "[缩写练习]";
+            document.getElementById("question").textContent = 
+                `${randomAcid.name}的${isThreeLetter ? "三字母" : "单字母"}缩写是？`;
+            
+            currentCorrectAnswer = isThreeLetter ? randomAcid.threeLetter : randomAcid.oneLetter;
+            currentQuestionType = "abbreviation";
+            generateOptions(randomAcid, isThreeLetter);
+        }
+
+        function generateStructureQuestion() {
+            const questionData = structureQuestions[Math.floor(Math.random() * structureQuestions.length)];
+            const category = questionData.type;
+            const answer = questionData.getAnswer(category);
+            
+            document.getElementById("questionType").textContent = "[结构分类]";
+            document.getElementById("question").textContent = questionData.template(category);
+            
+            currentCorrectAnswer = answer.threeLetter;
+            currentQuestionType = "structure";
+            generateStructureOptions(category, questionData, answer);
+        }
+
+        function generateOptions(correctAcid, isThreeLetter) {
+            const otherAcids = aminoAcids.filter(a => a !== correctAcid);
+            const wrongOptions = otherAcids
+                .map(a => isThreeLetter ? a.threeLetter : a.oneLetter)
+                .filter((v, i, a) => a.indexOf(v) === i)
+                .slice(0, 3);
+
+            showOptions([currentCorrectAnswer, ...wrongOptions]);
+        }
+
+        // 新增中文选项生成函数
+        function generateChineseOptions(correctAcid) {
+            const otherAcids = aminoAcids.filter(a => a !== correctAcid);
+            const wrongOptions = otherAcids
+                .map(a => a.name)
+                .filter((v, i, a) => a.indexOf(v) === i)
+                .slice(0, 3);
+
+            showOptions([currentCorrectAnswer, ...wrongOptions]);
+        }
+
+        function generateStructureOptions(category, questionData, answer) {
+            const correctOptions = [answer.threeLetter];
+            const wrongOptions = questionData.getOptions(category)
+                .map(a => a.threeLetter)
+                .filter(v => v !== answer.threeLetter)
+                .slice(0, 3);
+
+            showOptions(shuffle([...correctOptions, ...wrongOptions]));
+        }
+
+        function showOptions(options) {
+            const optionsDiv = document.getElementById("options");
+            optionsDiv.innerHTML = "";
+            shuffle(options).forEach(option => {
+                const container = document.createElement("div");
+                container.className = "option-container";
+                
+                const button = document.createElement("button");
+                button.textContent = option;
+                button.onclick = () => checkAnswer(option);
+                
+                // 根据题目类型添加附加信息
+                const nameSpan = document.createElement("span");
+                nameSpan.className = "chinese-name";
+                
+                if(currentQuestionType === "abbreviation") {
+                    const acid = aminoAcids.find(a => 
+                        a.threeLetter === option || a.oneLetter === option
+                    );
+                    nameSpan.textContent = acid ? acid.name : '';
+                }
+                
+                container.appendChild(button);
+                if(currentQuestionType !== "chinese") {
+                    container.appendChild(nameSpan);
+                }
+                optionsDiv.appendChild(container);
+            });
+        }
+
+        function checkAnswer(selected) {
+            const feedbackDiv = document.getElementById("feedback");
+            const containers = document.querySelectorAll(".option-container");
+            
+            containers.forEach(container => {
+                const button = container.querySelector("button");
+                const nameSpan = container.querySelector(".chinese-name");
+                
+                // 显示附加信息
+                if(nameSpan) {
+                    nameSpan.classList.add("show-name");
+                }
+
+                // 设置按钮样式
+                button.classList.remove("correct", "wrong");
+                if (button.textContent === currentCorrectAnswer) {
+                    button.classList.add("correct");
+                }
+                if (button.textContent === selected && selected !== currentCorrectAnswer) {
+                    button.classList.add("wrong");
+                }
+            });
+
+            if (selected === currentCorrectAnswer) {
+                score++;
+                document.getElementById("score").textContent = `得分: ${score}`;
+                feedbackDiv.textContent = "✅ 正确！";
+            } else {
+                feedbackDiv.textContent = `❌ 错误，正确答案是：${currentCorrectAnswer}`;
+            }
+
+            setTimeout(generateQuestion, 1500);
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        generateQuestion();
+    </script>
+</body>
+</html>
